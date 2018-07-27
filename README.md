@@ -1,1 +1,2 @@
 # tnmoccrisissim
+Earth quake simulator
