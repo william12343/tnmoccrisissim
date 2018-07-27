@@ -34,13 +34,6 @@ clock = pygame.time.Clock()
 
 world = world(gravity=(0, -10), doSleep=True)
 
-ground_shape = Box2D.b2PolygonShape(vertices = [(0 , 10),
-                                                (2 , 1),
-                                                (98 , 1),
-                                                (100 , 10),
-                                                (100 , 0),
-                                                (0 , 0)])
-
 ground_body = world.CreateStaticBody(
     position=(0, 0),
     shapes=(polygonShape(box=(100, 5))),
@@ -74,6 +67,8 @@ fontLarge = pygame.font.Font(None , 80)
 
 icons = {'runningA':pygame.image.load('Textures/Icon_Running_A.png'),
          'runningB':pygame.image.load('Textures/Icon_Running_B.png')}
+#
+backgrounds = {'sandbox':pygame.image.load('Textures/Background_Sandbox.png')}
 #
 texture1x1 = pygame.image.load('Textures/RTS_Crate.png')
 texture1x2 = pygame.image.load('Textures/RTS_Crate1x2.png')
@@ -178,7 +173,8 @@ def earthQuake(magnitude , vertical=True):
 def displayInfo():
     showBlockRotation(pygame.mouse.get_pos())
     fps = font.render(str(int(clock.get_fps())) , True , pygame.Color('white'))
-    infoTxt = "Build Phase = {} : QS = {} : QDir = {}".format(not(quakeActive) , quakeStep , 'vertical' if quakeVertical else 'horizontal')
+    infoTxt = "Money: {}".format(money)
+    #infoTxt = "Build Phase = {} : QS = {} : QDir = {}".format(not(quakeActive) , quakeStep , 'vertical' if quakeVertical else 'horizontal')
     info = font.render(infoTxt , True , pygame.Color('white'))
     screen.blit(fps , (10 , 10))
     screen.blit(info , (10 , 30))
@@ -192,7 +188,6 @@ def showBlockRotation(pos):
     #
     texture = textures[blockSize]
     scale = ((blockSize[0]*PPM) / texture.get_rect().width) * 2
-    #print(scale)
     img = pygame.transform.rotozoom(texture , blockRotation , scale)
     mPos = pygame.mouse.get_pos()
     pos = (mPos[0] - rectCentre(img.get_rect())[0],
@@ -214,6 +209,10 @@ startButtons = [Button((240 , 200),
 
 x , y = SCREEN_WIDTH , SCREEN_HEIGHT/2
 people = [[x+randint(-200 , 1000) , y+randint(0 , y) , bool(randint(0,1)) , 10] for _ in range(5)]
+
+###
+
+money = 100
 
 ###
 
@@ -304,6 +303,7 @@ while mainLoop:
                 if event.button == 1 and not(quakeActive):              # CREATE BODY ON LEFT CLICK
                     pos = pixelsToWorld(pygame.mouse.get_pos())
                     createBlock(pos)
+                    money -= blockSize[0] * blockSize[1]
                     ###
                 elif event.button == 2 and not(quakeActive):            # DELETE BODY ON MIDDLE MOUSE CLICK
                     pos = screenToWorld(pygame.mouse.get_pos())
@@ -312,6 +312,7 @@ while mainLoop:
                                   upperBound=pos + (0.001 , 0.001))
                     world.QueryAABB(cb , aabb)
                     if cb.fixture != None:
+                        #money += area(cb.fixture.body)
                         world.DestroyBody(cb.fixture.body)
                     ###
                 elif event.button == 3 and not(quakeActive):            # CREATE JOINT ON RIGHT CLICK
@@ -337,6 +338,7 @@ while mainLoop:
                                                                    localAnchorA=firstBody.localCenter,
                                                                    localAnchorB=cb.fixture.body.localCenter,)
                                 firstBody = None
+                                money -= math.ceil(joint.length)
                     ###
                 elif event.button == 4: # SCROLL UP
                     mouseWheel += 1
@@ -412,7 +414,6 @@ while mainLoop:
                         texture = texture1x2
                     #
                     scale = ((shape.vertices[2][0]*PPM) / texture.get_rect().width) * 2
-                    print(scale)
                     img = pygame.transform.rotozoom(texture , math.degrees(angle) , scale)
                     #
                     sPos = (pos[0] - rectCentre(img.get_rect())[0],
